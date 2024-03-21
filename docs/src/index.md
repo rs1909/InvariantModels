@@ -73,9 +73,7 @@ push!(LOAD_PATH, pwd() * "/../../")
 First we import the required packages
 ```@example full
 using InvariantModels
-using GLMakie
-using CairoMakie # hide
-GLMakie.activate!() # hide
+using CairoMakie
 ```
 
 Consider the Shaw-Pierre vector field
@@ -109,7 +107,6 @@ fourier_order = 7       # fourier harmonics to be resolved
 ODE_order = 7           # polynomial order of the calculations
 SEL = [1 2]             # which invariant vector bundle to use
 dispMaxAmp = 1.0        # maximum amplitude to display
-
 ```
 
 ### Invariant Manifolds of Vector Fields
@@ -118,12 +115,10 @@ Create a polynomial `MPode`, `XPode` out of our vector field
 ```@example full
 MPode = QPPolynomial(NDIM, NDIM, fourier_order, 0, ODE_order)
 XPode = fromFunction(MPode, (x, t) -> shawpierre(x, Amplitude, t))
-
 ```
 The invariant manifold can now be calculated using [`QPODETorusManifold`](@ref):
 ```@example full
 MK, XK, MSn, XSn, MWn, XWn, _, _, _, _, XWre, oeva = QPODETorusManifold(MPode, XPode, omega_ode, SEL, threshold=0.1, resonance=false)
-
 ```
 The frequencies and damping ratios are extracted from the reduced order model using [`ODEFrequencyDamping`](@ref)
 ```@example full
@@ -131,7 +126,6 @@ That_ode, Rhat_ode, rho_ode, gamma_ode = ODEFrequencyDamping(MWn, XWn, MSn, XSn,
 odeAmp = range(0, dispMaxAmp, length=1000)
 odeFreq = abs.(That_ode.(odeAmp))
 odeDamp = -Rhat_ode.(odeAmp) ./ odeFreq
-
 ```
 The results are then plotted
 ```@example full
@@ -145,10 +139,7 @@ axDamp.ylabel = "Amplitude"
 
 lines!(axFreq, odeFreq, odeAmp, label="ODE O($(ODE_order)) A=$(Amplitude)", linestyle=:dash, linewidth=2)
 lines!(axDamp, odeDamp, odeAmp, label="ODE O($(ODE_order)) A=$(Amplitude)", linestyle=:dash, linewidth=2)
-display(fig)
-CairoMakie.activate!(type="svg") # hide
 save("fig-data-ODE.svg", fig) # hide
-GLMakie.activate!() # hide
 ```
 
 ![](fig-data-ODE.svg)
@@ -165,12 +156,10 @@ We now create a discrete-time map from the vector field by Taylor expanding an O
 MP = QPPolynomial(NDIM, NDIM, fourier_order, 0, ODE_order)
 XPmap = zero(MP)
 mapFromODE(MP, XPmap, shawpierre!, Amplitude, omega_ode, Tstep / 500, Tstep)
-
 ```
 The invariant manifold of the map is calculated using [`QPMAPTorusManifold`](@ref)
 ```@example full
 MK, XK, MSn, XSn, MWn, XWn, MSd, XSd = QPMAPTorusManifold(MP, XPmap, omega, SEL, threshold = 0.1, resonance = false)
-
 ```
 The frequencies and damping ratios are extracted from the reduced order model using [`MAPFrequencyDamping`](@ref)
 ```@example full
@@ -178,16 +167,12 @@ That, Rhat_r, rho, gamma = MAPFrequencyDamping(MWn, XWn, MSn, XSn, dispMaxAmp)
 mapAmp = range(0, dispMaxAmp, length=1000)
 mapFreq = abs.(That.(mapAmp)) ./ Tstep
 mapDamp = -log.(abs.(Rhat_r.(mapAmp))) ./ abs.(That.(mapAmp))
-
 ```
 The results are plotted
 ```@example full
 lines!(axFreq, mapFreq, mapAmp, label="MAP O($(ODE_order)) A=$(Amplitude)", linestyle=:dashdot, linewidth=2)
 lines!(axDamp, mapDamp, mapAmp, label="MAP O($(ODE_order)) A=$(Amplitude)", linestyle=:dashdot, linewidth=2)
-display(fig)
-CairoMakie.activate!(type="svg") # hide
 save("fig-data-MAP.svg", fig) # hide
-GLMakie.activate!() # hide
 ```
 
 ![](fig-data-MAP.svg)
@@ -197,7 +182,6 @@ GLMakie.activate!() # hide
 Using [`QPGraphStyleFoliations`](@ref), two invariant foliations are calculated and the invariant manifold defined by the zero level-set of the second foliation is extracted.
 ```@example full
 MRf, XRf, MW, XW, MRt, XRt, MUt, XUt, MSt, XSt, MVt, XVt = QPGraphStyleFoliations(MP, XPmap, omega, SEL; dataScale=1, resonance=false, threshold=0.1)
-
 ```
 The results are plotted
 ```@example full
@@ -208,10 +192,7 @@ foilDamp = -log.(abs.(Rhat_r.(foilAmp))) ./ abs.(That.(foilAmp))
 
 lines!(axFreq, foilFreq, foilAmp, label="FOIL O($(ODE_order)) A=$(Amplitude)", linestyle=:dashdot, linewidth=2)
 lines!(axDamp, foilDamp, foilAmp, label="FOIL O($(ODE_order)) A=$(Amplitude)", linestyle=:dashdot, linewidth=2)
-display(fig)
-CairoMakie.activate!(type="svg") # hide
 save("fig-data-FOIL.svg", fig) # hide
-GLMakie.activate!() # hide
 ```
 
 ![](fig-data-FOIL.svg)
@@ -244,7 +225,6 @@ We create 600 trajectories 60 points long each using [`generate`](@ref) and save
 ```@example full
 dataX, dataY, thetaX, thetaY, thetaNIX, thetaNIY = generate(NDIM, shawpierre!, ones(NDIM) * maxSimAmp, 600, 50, fourier_order, omega_ode, Tstep, Amplitude, XWre)
 @load "data-$(datarevision).bson" dataX dataY thetaX thetaY Tstep # hide
-
 ```
 
 ### Finding an Approximate Linear Model
@@ -252,7 +232,6 @@ dataX, dataY, thetaX, thetaY, thetaNIX, thetaNIY = generate(NDIM, shawpierre!, o
 An approximate linear model is found about the invariant torus using [`findLinearModel`](@ref).
 ```@example full
 A, b, MK1, XK1 = findLinearModel(dataX, thetaX, dataY, thetaY, omega)
-
 ```
 
 ### Identifying Invariant Vector Bundles and Transforming Data
@@ -260,7 +239,6 @@ A, b, MK1, XK1 = findLinearModel(dataX, thetaX, dataY, thetaY, omega)
 We calculate invariant vector bundles from the linear model and project the data into this coordinate system using [`QPPreProcess`](@ref)
 ```@example full
 thetaTX, dataTX, thetaTY, dataTY, dataScale, preId, R1, S1, W1 = QPPreProcess(XK1, A, omega, thetaX, dataX, thetaY, dataY, SEL; Tstep=Tstep, maxAmp=maxAmp, data_ratio=dataRatio)
-
 ```
 Here, the inverse transformation `W1` was also created.
 
@@ -274,7 +252,6 @@ XCFcache = makeCache(MCF, XCF, thetaTX, dataTX, thetaTY, dataTY)
 dataIdV = Array{Any,1}(undef, 1)
 dataIdV[1] = 1:size(thetaTX, 2)
 radii = to_zero(XCF)
-
 ```
 
 ### Performing the Optimisation
@@ -306,10 +283,7 @@ dataAmp = r_data .* dataScale
 # plotting
 lines!(axFreq, dataFreq, dataAmp, label="DATA O($(R_order), $(S_order))", linestyle=:solid, linewidth=2)
 lines!(axDamp, dataDamp, dataAmp, label="DATA O($(R_order), $(S_order))", linestyle=:solid, linewidth=2)
-display(fig)
-CairoMakie.activate!(type="svg") # hide
 save("fig-data-DATA.svg", fig) # hide
-GLMakie.activate!() # hide
 ```
 ![](fig-data-DATA.svg)
 
@@ -331,7 +305,6 @@ atol = eps(maximum(den.density))
 den.density[findall(isapprox.(den.density, 0, atol=atol))] .= atol
 dataDensityX = den.density
 dataDensityY = den.x
-
 ```
 
 The error and data distribution is the plotted
@@ -345,7 +318,7 @@ xlims!(axDense, 1e-2, 100)
 ylims!(axDense, 0, maxAmp)
 
 lines!(axDense, dataDensityX, dataDensityY)
-heatmap!(axErr, hsU, colormap=GLMakie.Reverse(:greys))
+heatmap!(axErr, hsU, colormap=CairoMakie.Reverse(:greys))
 lines!(axErr, errMaxX, errMaxY, linestyle=:solid, linewidth=2, color=:red)
 lines!(axErr, errMinX, errMinY, linestyle=:solid, linewidth=2, color=:red)
 lines!(axErr, errMeanX, errMeanY, linestyle=:dash, linewidth=2, color=:blue)
@@ -357,10 +330,7 @@ Finally plot legends are displayed
 # creating the legend
 fig[1, 5] = Legend(fig, axFreq, merge=true, unique=true, labelsize=16, backgroundcolor=(:white, 0), framevisible=false, rowgap=1)
 resize_to_layout!(fig)
-display(fig)
-CairoMakie.activate!(type="svg") # hide
 save("fig-data-DATA-ERR.svg", fig) # hide
-GLMakie.activate!() # hide
 ```
 ![](fig-data-DATA-ERR.svg)
 
