@@ -67,14 +67,19 @@ Without forcing the natural frequencies are approximately ``\omega_1 = 1``, ``\o
 
 ### Set-up
 
+```@setup full
+push!(LOAD_PATH, pwd() * "/../../")
+```
 First we import the required packages
-```julia
+```@example full
 using InvariantModels
 using GLMakie
+using CairoMakie # hide
+GLMakie.activate!() # hide
 ```
 
 Consider the Shaw-Pierre vector field
-```julia
+```@example full
 NDIM = 4
 
 function shawpierre!(x, y, p, t)
@@ -95,40 +100,44 @@ function shawpierre(z, p, t)
 end
 ```
 Set up some system parameters
-```julia
+```@example full
 Amplitude = 0.25        # forcing amplitude
 omega_ode = 1.2         # forcing frequency
 
 # parameters of the numerical method
-fourier_order = 3       # fourier harmonics to be resolved
+fourier_order = 7       # fourier harmonics to be resolved
 ODE_order = 7           # polynomial order of the calculations
 SEL = [1 2]             # which invariant vector bundle to use
 dispMaxAmp = 1.0        # maximum amplitude to display
+
 ```
 
 ### Invariant Manifolds of Vector Fields
 
 Create a polynomial `MPode`, `XPode` out of our vector field
-```julia
+```@example full
 MPode = QPPolynomial(NDIM, NDIM, fourier_order, 0, ODE_order)
 XPode = fromFunction(MPode, (x, t) -> shawpierre(x, Amplitude, t))
+
 ```
 The invariant manifold can now be calculated using [`QPODETorusManifold`](@ref):
-```julia
-MK, XK, MSn, XSn, MWn, XWn, _, _, XWre, oeva = QPODETorusManifold(MPode, XPode, omega_ode, SEL, threshold=0.1, resonance=false)
+```@example full
+MK, XK, MSn, XSn, MWn, XWn, _, _, _, _, XWre, oeva = QPODETorusManifold(MPode, XPode, omega_ode, SEL, threshold=0.1, resonance=false)
+
 ```
 The frequencies and damping ratios are extracted from the reduced order model using [`ODEFrequencyDamping`](@ref)
-```julia
+```@example full
 That_ode, Rhat_ode, rho_ode, gamma_ode = ODEFrequencyDamping(MWn, XWn, MSn, XSn, dispMaxAmp)
 odeAmp = range(0, dispMaxAmp, length=1000)
 odeFreq = abs.(That_ode.(odeAmp))
 odeDamp = -Rhat_ode.(odeAmp) ./ odeFreq
+
 ```
 The results are then plotted
-```julia
+```@example full
 fig = Figure(size=(1200, 400))
-axFreq = Axis(fig[1, 1])
-axDamp = Axis(fig[1, 2])
+axFreq = Axis(fig[1, 3])
+axDamp = Axis(fig[1, 4])
 axFreq.xlabel = "Frequency"
 axFreq.ylabel = "Amplitude"
 axDamp.xlabel = "Damping ratio"
@@ -137,53 +146,62 @@ axDamp.ylabel = "Amplitude"
 lines!(axFreq, odeFreq, odeAmp, label="ODE O($(ODE_order)) A=$(Amplitude)", linestyle=:dash, linewidth=2)
 lines!(axDamp, odeDamp, odeAmp, label="ODE O($(ODE_order)) A=$(Amplitude)", linestyle=:dash, linewidth=2)
 display(fig)
+CairoMakie.activate!(type="svg") # hide
+save("fig-data-ODE.svg", fig) # hide
+GLMakie.activate!() # hide
 ```
 
-![](fig-data-shawpierre-2p-8.0-SIMAMP1.0-AMP0.25-F3-R7-U7-V7-S7-MODE1-ODE.svg)
+![](fig-data-ODE.svg)
 
 ### Invariant Manifolds of Maps
 
 First we set up some additional parameters, such as the sampling period ``\Delta t`` = `Tstep`
-```julia
+```@example full
 Tstep = 0.8                 # sampling period
 omega = omega_ode * Tstep   # shift angle
 ```
 We now create a discrete-time map from the vector field by Taylor expanding an ODE solver about the origin using [`mapFromODE`](@ref). We take 500 time steps on the interval ``[\theta,\theta + \Delta t]``. The resulting map `MP`, `XPmap` is dependent on the phase variable ``\theta \in [0,2\pi)``
-```julia
+```@example full
 MP = QPPolynomial(NDIM, NDIM, fourier_order, 0, ODE_order)
 XPmap = zero(MP)
 mapFromODE(MP, XPmap, shawpierre!, Amplitude, omega_ode, Tstep / 500, Tstep)
+
 ```
 The invariant manifold of the map is calculated using [`QPMAPTorusManifold`](@ref)
-```julia
+```@example full
 MK, XK, MSn, XSn, MWn, XWn, MSd, XSd = QPMAPTorusManifold(MP, XPmap, omega, SEL, threshold = 0.1, resonance = false)
+
 ```
 The frequencies and damping ratios are extracted from the reduced order model using [`MAPFrequencyDamping`](@ref)
-```julia
+```@example full
 That, Rhat_r, rho, gamma = MAPFrequencyDamping(MWn, XWn, MSn, XSn, dispMaxAmp)
 mapAmp = range(0, dispMaxAmp, length=1000)
 mapFreq = abs.(That.(mapAmp)) ./ Tstep
 mapDamp = -log.(abs.(Rhat_r.(mapAmp))) ./ abs.(That.(mapAmp))
+
 ```
 The results are plotted
-```julia
+```@example full
 lines!(axFreq, mapFreq, mapAmp, label="MAP O($(ODE_order)) A=$(Amplitude)", linestyle=:dashdot, linewidth=2)
 lines!(axDamp, mapDamp, mapAmp, label="MAP O($(ODE_order)) A=$(Amplitude)", linestyle=:dashdot, linewidth=2)
 display(fig)
+CairoMakie.activate!(type="svg") # hide
+save("fig-data-MAP.svg", fig) # hide
+GLMakie.activate!() # hide
 ```
 
-![](fig-data-shawpierre-2p-8.0-SIMAMP1.0-AMP0.25-F3-R7-U7-V7-S7-MODE1-MAP.svg)
+![](fig-data-MAP.svg)
 
 ### Invariant Foliations of Maps
 
 Using [`QPGraphStyleFoliations`](@ref), two invariant foliations are calculated and the invariant manifold defined by the zero level-set of the second foliation is extracted.
-```julia
+```@example full
 MRf, XRf, MW, XW, MRt, XRt, MUt, XUt, MSt, XSt, MVt, XVt = QPGraphStyleFoliations(MP, XPmap, omega, SEL; dataScale=1, resonance=false, threshold=0.1)
+
 ```
 The results are plotted
-```julia
-MWf, XWf = toFourier(MW, XW)
-That, Rhat_r, rho, gamma = MAPFrequencyDamping(MWf, XWf, MRf, XRf, dispMaxAmp)
+```@example full
+That, Rhat_r, rho, gamma = MAPFrequencyDamping(MW, XW, MRf, XRf, dispMaxAmp)
 foilAmp = range(0, dispMaxAmp, length=1000)
 foilFreq = abs.(That.(foilAmp)) ./ Tstep
 foilDamp = -log.(abs.(Rhat_r.(foilAmp))) ./ abs.(That.(foilAmp))
@@ -191,16 +209,19 @@ foilDamp = -log.(abs.(Rhat_r.(foilAmp))) ./ abs.(That.(foilAmp))
 lines!(axFreq, foilFreq, foilAmp, label="FOIL O($(ODE_order)) A=$(Amplitude)", linestyle=:dashdot, linewidth=2)
 lines!(axDamp, foilDamp, foilAmp, label="FOIL O($(ODE_order)) A=$(Amplitude)", linestyle=:dashdot, linewidth=2)
 display(fig)
+CairoMakie.activate!(type="svg") # hide
+save("fig-data-FOIL.svg", fig) # hide
+GLMakie.activate!() # hide
 ```
 
-![](fig-data-shawpierre-2p-8.0-SIMAMP1.0-AMP0.25-F3-R7-U7-V7-S7-MODE1-FOIL.svg)
+![](fig-data-FOIL.svg)
 
 ## ROM identification from data
 
 ### Set-up
 
 Importing a library to load/store data and specifying parameters
-```julia
+```@example full
 using BSON: @load, @save
 # parameters for the data-driven part
 maxSimAmp = 1.0     # maximum initial condition measured from the torus
@@ -220,36 +241,40 @@ datarevision = "shawpierre-SIMAMP$(maxSimAmp)-AMP$(Amplitude)-F$(fourier_order)"
 ### Creating data
 
 We create 600 trajectories 60 points long each using [`generate`](@ref) and save the data for future use.
-```julia
+```@example full
 dataX, dataY, thetaX, thetaY, thetaNIX, thetaNIY = generate(NDIM, shawpierre!, ones(NDIM) * maxSimAmp, 600, 50, fourier_order, omega_ode, Tstep, Amplitude, XWre)
-@save "data-$(datarevision).bson" dataX dataY thetaX thetaY Tstep
+@load "data-$(datarevision).bson" dataX dataY thetaX thetaY Tstep # hide
+
 ```
 
 ### Finding an Approximate Linear Model
 
 An approximate linear model is found about the invariant torus using [`findLinearModel`](@ref).
-```julia
+```@example full
 A, b, MK1, XK1 = findLinearModel(dataX, thetaX, dataY, thetaY, omega)
+
 ```
 
 ### Identifying Invariant Vector Bundles and Transforming Data
 
 We calculate invariant vector bundles from the linear model and project the data into this coordinate system using [`QPPreProcess`](@ref)
-```julia
+```@example full
 thetaTX, dataTX, thetaTY, dataTY, dataScale, preId, R1, S1, W1 = QPPreProcess(XK1, A, omega, thetaX, dataX, thetaY, dataY, SEL; Tstep=Tstep, maxAmp=maxAmp, data_ratio=dataRatio)
+
 ```
 Here, the inverse transformation `W1` was also created.
 
 ### Setting up the Function Approximators
 
 We create the data structure holding our two invariant foliations using [`QPCombinedFoliation`](@ref) and set up the data cache that speeds up calculations using [`makeCache`](@ref). Our optimisation algorithm requires setting up so-called trust-region `radii`. For housekeeping purposes we also specify using `dataIdV` that all data points are used for identifiction.
-```julia
+```@example full
 MCF, XCF = QPCombinedFoliation(NDIM, 2, fourier_order, R_order, U_order, S_order, V_order, R1, S1, MK1, zero(XK1), sparse=false)
 # creating a cache
 XCFcache = makeCache(MCF, XCF, thetaTX, dataTX, thetaTY, dataTY)
 dataIdV = Array{Any,1}(undef, 1)
 dataIdV[1] = 1:size(thetaTX, 2)
 radii = to_zero(XCF)
+
 ```
 
 ### Performing the Optimisation
@@ -265,12 +290,14 @@ QPOptimise(MCF, XCF, thetaTX, dataTX, thetaTY, dataTY;
 ### Analysis of the result
 
 The post processing step using [`QPPostProcess`](@ref) extract a reduced order model together with an invariant manifold. The manifold immersion ``\boldsymbol{W}`` is `MW`, `XW`.
-```
+```@example full
+@load "CF-$(revision).bson" MCF XCF Tstep dataId dataScale # hide
 MSn, XSn, MFW, XFWoWdoWn, MW, XW = QPPostProcess(MCF, XCF, W1, omega)
+
 ```
 
 The instantaneous frequencies and damping ratios are also plotted
-```julia
+```@example full
 That, Rhat_r, rho, gamma = MAPFrequencyDamping(MFW, XFWoWdoWn, MSn, XSn, dispMaxAmp / dataScale)
 r_data = range(0, dispMaxAmp / dataScale, length=1000)
 dataFreq = abs.(That.(r_data)) / Tstep
@@ -279,8 +306,12 @@ dataAmp = r_data .* dataScale
 # plotting
 lines!(axFreq, dataFreq, dataAmp, label="DATA O($(R_order), $(S_order))", linestyle=:solid, linewidth=2)
 lines!(axDamp, dataDamp, dataAmp, label="DATA O($(R_order), $(S_order))", linestyle=:solid, linewidth=2)
+display(fig)
+CairoMakie.activate!(type="svg") # hide
+save("fig-data-DATA.svg", fig) # hide
+GLMakie.activate!() # hide
 ```
-![](fig-data-shawpierre-2p-8.0-SIMAMP1.0-AMP0.25-F3-R7-U7-V7-S7-MODE1-FOIL.svg)
+![](fig-data-DATA.svg)
 
 ### Error Analysis
 
@@ -293,18 +324,19 @@ The amplitude of a given point is calculated by
     A = \left| \boldsymbol{W}(\boldsymbol{U}(\boldsymbol{x}_k, \theta_k)) \right|
 ```
 The following call calculates ``A`` as `OnManifoldAmplitude` and various statistics about `E` as a function of the amplitude.
-```julia
+```@example full
 OnManifoldAmplitude, hsU, errMaxX, errMaxY, errMinX, errMinY, errMeanX, errMeanY, errStdX = ErrorStatistics(MCF, XCF, MW, XW, thetaTX, dataTX, thetaTY, dataTY; dataScale=dataScale, cache=XCFcache)
 den = Makie.KernelDensity.kde(sort(vcat(OnManifoldAmplitude, -OnManifoldAmplitude)))
 atol = eps(maximum(den.density))
 den.density[findall(isapprox.(den.density, 0, atol=atol))] .= atol
 dataDensityX = den.density
 dataDensityY = den.x
+
 ```
 
 The error and data distribution is the plotted
 
-```julia
+```@example full
 axErr = Axis(fig[1, 2], xscale=log10)
 axDense = Axis(fig[1, 1], xscale=log10)
 xlims!(axErr, 1e-6, 1e-1)
@@ -321,18 +353,20 @@ lines!(axErr, errMeanX .+ errStdX, errMeanY, linestyle=:dot, linewidth=2, color=
 ```
 
 Finally plot legends are displayed
-```julia
+```@example full
 # creating the legend
 fig[1, 5] = Legend(fig, axFreq, merge=true, unique=true, labelsize=16, backgroundcolor=(:white, 0), framevisible=false, rowgap=1)
 resize_to_layout!(fig)
 display(fig)
+CairoMakie.activate!(type="svg") # hide
+save("fig-data-DATA-ERR.svg", fig) # hide
+GLMakie.activate!() # hide
 ```
-
-![](fig-data-shawpierre-2p-8.0-SIMAMP1.0-AMP0.25-F3-R7-U7-V7-S7-MODE1.svg)
+![](fig-data-DATA-ERR.svg)
 
 ## Functional Representation
 
-All data structures follow the conventions of [ManifoldsBase.jl](https://juliamanifolds.github.io/ManifoldsBase.jl). For example, the representation of the submersion ``\boldsymbol{U}`` is given as two components `MU` and `XU`, where `MU` describes the function and `XU` contains the parameters of ``\boldsymbol{U}``.
+All data structures follow the conventions of [ManifoldsBase.jl](https://@example fullmanifolds.github.io/ManifoldsBase.jl). For example, the representation of the submersion ``\boldsymbol{U}`` is given as two components `MU` and `XU`, where `MU` describes the function and `XU` contains the parameters of ``\boldsymbol{U}``.
 
 ### Interpolation in Fourier Space
 
