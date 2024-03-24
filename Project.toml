@@ -29,16 +29,17 @@ Tullio = "bc48ee85-29a4-5162-ae0b-a64e1601d4bc"
 UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 
 [compat]
-ManifoldsBase = "0.15"
 julia = "1"
 ApproxFun = "0.13"
 BSON = "0.3"
 Clustering = "0.15"
 # GLMakie = "0.9"
 LoopVectorization = "0.12"
+ManifoldsBase = "0.15"
 RecursiveArrayTools = "3"
 Statistics = "1"
 StatsBase = "0.34"
+TaylorSeries = "0.17"
 TensorOperations = "4"
 Tullio = "0.3"
 
