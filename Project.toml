@@ -29,6 +29,7 @@ Tullio = "bc48ee85-29a4-5162-ae0b-a64e1601d4bc"
 UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 
 [compat]
+Manopt = "0.4"
 julia = "1"
 ApproxFun = "0.13"
 BSON = "0.3"
