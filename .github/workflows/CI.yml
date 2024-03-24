@@ -50,6 +50,7 @@ jobs:
       - run: |
           julia --project=docs -e '
             import Pkg; Pkg.add("Documenter")
+            Pkg.add("CairoMakie")
             using Pkg
             Pkg.develop(PackageSpec(path=pwd()))
             Pkg.instantiate()'
