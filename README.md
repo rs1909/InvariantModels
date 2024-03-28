@@ -15,7 +15,7 @@ The key concept behind methods implemented here is invariance. The following met
   
     + differential equations
     + discrete-time systems (maps)
-    + cannot be done directly from data (regardless of what others claim), but can be done from foliations
+    + cannot be done directly from data (regardless of what others claim), but can be extracted from foliations
     
   * Invariant manifolds from two invariant foliations
   
@@ -23,8 +23,15 @@ The key concept behind methods implemented here is invariance. The following met
 
 The package has been used to demonstrate the methods in papers
 
-  1. *R. Szalai.* Machine-learning invariant foliations in forced systems for reduced order modelling, *preprint*, 2024 
-  2. *R. Szalai.* Non-resonant invariant foliations of quasi-periodically forced systems, *preprint*, 2024 
+  1. *R. Szalai.* Machine-learning invariant foliations in forced systems for reduced order modelling, *[preprint](https://arxiv.org/abs/2403.14514)*, 2024 
+  2. *R. Szalai.* Non-resonant invariant foliations of quasi-periodically forced systems, *[preprint](https://arxiv.org/abs/2403.14771)*, 2024
+
+There are two other papers that explain the background of the methods.
+
+  3. *R. Szalai*, Data-Driven Reduced Order Models Using Invariant Foliations, Manifolds and Autoencoders, J Nonlinear Sci 33, 75 (2023). [link](https://doi.org/10.1007/s00332-023-09932-y)
+  4. *R. Szalai*, Invariant spectral foliations with applications to model order reduction and synthesis. Nonlinear Dyn 101, 2645–2669 (2020). [link](https://doi.org/10.1007/s11071-020-05891-1)
+ 
+Paper [4] introduced the idea of using invariant foliations for reduced order modelling, paper [3] has shown that only invariant foliations can be used for genuine data-driven reduced order modelling (when we classify all possible methods into: a) autoencoders, b) invariant foliations, c) invariant manifolds, d) equation-free models.
 
 There are four examples. For paper 1:
 
