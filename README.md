@@ -1,7 +1,9 @@
 # InvariantModels
 ## A Julia package to calculate data-driven and equation-driven reduced order models
 
-See detailed documentation and a case study [here](https://rs1909.github.io/InvariantModels/).
+Watch the video explaining invariant foliations [here](https://www.youtube.com/watch?v=LPGuMT13zMA).
+
+The detailed documentation and a case study can be found [here](https://rs1909.github.io/InvariantModels/).
 
 The key concept behind methods implemented here is invariance. The following methods are implemented both for autonomous and (quasi-) peridocically forced systems.
 
